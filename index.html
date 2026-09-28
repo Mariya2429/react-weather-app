@@ -1,0 +1,161 @@
+ <!DOCTYPE html>
+<html>
+<head>
+    <title>Weather App</title>
+
+    <!-- React -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #f2f2f2;
+            text-align: center;
+            padding-top: 80px;
+        }
+
+        .weather-box {
+            background: white;
+            width: 350px;
+            margin: auto;
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        input {
+            padding: 12px;
+            width: 200px;
+        }
+
+        button {
+            padding: 12px;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+         const API_KEY = "a1d662c6ec20ce81c055ec9c55ac1dd3";
+
+    function App() {
+
+        const [city, setCity] = React.useState("");
+        const [weather, setWeather] = React.useState(null);
+        const [error, setError] = React.useState("");
+        const [loading, setLoading] = React.useState(false);
+
+        const searchWeather = async () => {
+
+    const trimmedCity = city.trim();
+
+    // Security: Validate user input
+    if (!trimmedCity) {
+        setError("Please enter a city name");
+        setWeather(null);
+        return;
+    }
+
+    // Allow only letters, spaces and hyphens
+    if (!/^[a-zA-Z\s-]+$/.test(trimmedCity)) {
+        setError("Please enter a valid city name");
+        setWeather(null);
+        return;
+    }
+
+    try {
+        setError("");
+        setLoading(true);
+
+        const response = await fetch(
+            `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(trimmedCity)}&appid=${API_KEY}&units=metric`
+        );
+
+        const data = await response.json();
+
+        if (data.cod !== 200) {
+            setError("City not found");
+            setWeather(null);
+            return;
+        }
+
+        setWeather(data);
+
+    } catch (error) {
+        setError("Something went wrong");
+        setWeather(null);
+
+    } finally {
+        setLoading(false);
+    }
+};
+        return (
+            <div className="weather-box">
+
+                <h1>🌤️ Weather App</h1>
+
+                <input
+                    type="text"
+                    placeholder="Enter city"
+                    value={city}
+                    maxLength="50"
+                    onChange={(e) => setCity(e.target.value)}
+                    onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                    searchWeather();
+                    }
+                }}
+                />
+
+                <button onClick={searchWeather}>
+                    Search
+                </button>
+
+                {error && <p>{error}</p>}
+
+                {weather && (
+                    <div>
+                        <img src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`} alt="Weather Icon"/>
+
+                        <h2>{weather.name}</h2>
+
+                        <h3>{weather.main.temp}°C</h3>
+
+                        <p>{weather.weather[0].description}</p>
+
+                        <p>
+                        🌡️ Feels Like: {weather.main.feels_like}°C
+                        </p>
+
+                        <p>
+                            💧 Humidity: {weather.main.humidity}%
+                        </p>
+
+                        <p>
+                            💨 Wind: {weather.wind.speed} m/s
+                        </p>
+                    </div>
+                )}
+
+            </div>
+        );
+    }
+
+    ReactDOM.createRoot(
+        document.getElementById("root")
+    ).render(<App />);
+
+
+    </script>
+
+</body>
+</html>
